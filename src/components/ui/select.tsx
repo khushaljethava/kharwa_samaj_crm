@@ -126,7 +126,7 @@ export function SelectValue({ placeholder }: { placeholder?: string }) {
 export function SelectContent({ className, children, searchable = true }: React.HTMLAttributes<HTMLDivElement> & { searchable?: boolean }) {
   const ctx = React.useContext(SelectContext)!;
   if (!ctx.open) return null;
-  const childArray = React.Children.toArray(children) as Array<React.ReactElement<any>>;
+  const childArray = React.Children.toArray(children) as Array<React.ReactElement<unknown>>;
   const filteredChildren = !searchable || !ctx.query
     ? childArray
     : childArray.filter((child) => {
@@ -167,9 +167,10 @@ export function SelectContent({ className, children, searchable = true }: React.
 export function SelectItem({ value, children, onClick, searchText, ...rest }: { value: string; children: React.ReactNode; onClick?: () => void; searchText?: string; [key: string]: unknown; }) {
   const ctx = React.useContext(SelectContext)!;
   const label = (typeof children === "string" ? children : searchText) || String(children ?? value);
+  const registerItem = ctx.registerItem;
   React.useEffect(() => {
-    ctx.registerItem?.(value, String(label));
-  }, [value, label]);
+    registerItem?.(value, String(label));
+  }, [value, label, registerItem]);
   const selected = ctx.value === value;
   return (
     <div

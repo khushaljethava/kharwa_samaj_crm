@@ -17,6 +17,7 @@ interface StatCardProps {
   className?: string;
 }
 
+// reserved for future styling variants
 const variantStyles = {
   default: "border-border",
   success: "border-success/20 bg-success/5",

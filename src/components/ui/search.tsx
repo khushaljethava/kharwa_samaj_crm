@@ -108,7 +108,7 @@ export function Search({
       {showSuggestions && query && filteredSuggestions.length === 0 && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 p-3">
           <p className="text-sm text-muted-foreground text-center">
-            No results found for "{query}"
+            No results found for &quot;{query}&quot;
           </p>
         </div>
       )}

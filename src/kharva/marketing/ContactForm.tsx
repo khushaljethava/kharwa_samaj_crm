@@ -51,7 +51,7 @@ export function ContactForm({ className }: ContactFormProps) {
       } else {
         setSubmitStatus({ type: 'error', message: result.error || 'Something went wrong. Please try again.' });
       }
-    } catch (e) {
+    } catch {
       setSubmitStatus({ type: 'error', message: 'Network error. Please try again.' });
     } finally {
       setIsSubmitting(false);
