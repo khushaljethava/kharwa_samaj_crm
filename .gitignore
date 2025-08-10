@@ -4,6 +4,9 @@
 /node_modules
 /kharva-samaj-nextjs
 /.next-build
+/.next-dist
+/.next-lock
+/.next-out
 /.pnp
 .pnp.*
 .yarn/*

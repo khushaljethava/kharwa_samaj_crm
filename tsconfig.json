@@ -38,6 +38,7 @@
     ".next-dist/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "kharva-samaj-nextjs/**"
   ]
 }
