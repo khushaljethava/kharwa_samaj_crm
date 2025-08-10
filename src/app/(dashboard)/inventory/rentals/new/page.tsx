@@ -8,7 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MinusCircle, PlusCircle } from "lucide-react";
 
 type MemberLite = { id: string; name: string };
-type ItemLite = { id: string; name: string };
+type ItemLite = { 
+  id: string; 
+  name: string;
+  item_details?: { name?: string } | null;
+  sku?: string;
+};
+type PersonalInfo = { first_name?: string; middle_name?: string; last_name?: string };
+type ApiMember = { id: string; personal_info: PersonalInfo | null; member_code: string | null };
 
 export default function NewInventoryRentalPage() {
   const router = useRouter();
@@ -32,11 +39,11 @@ export default function NewInventoryRentalPage() {
       ]);
       const m = await mRes.json().catch(() => ({}));
       const i = await iRes.json().catch(() => ({}));
-      setMembers((m?.data || []).map((r: any) => ({
+      setMembers((m?.data || []).map((r: ApiMember) => ({
         id: r.id,
         name: displayName(r.personal_info, r.member_code, r.id),
       })));
-      setItems((i?.data || []).map((it: any) => ({
+      setItems((i?.data || []).map((it: ItemLite) => ({
         id: it.id,
         name: it.item_details?.name || it.sku || it.id,
       })));
@@ -164,7 +171,7 @@ export default function NewInventoryRentalPage() {
   );
 }
 
-function displayName(pi?: any, code?: string, id?: string) {
+function displayName(pi?: PersonalInfo | null, code?: string | null, id?: string) {
   const name = [pi?.first_name, pi?.middle_name, pi?.last_name].filter(Boolean).join(" ");
   return name || code || id || "—";
 }

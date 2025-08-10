@@ -20,7 +20,7 @@ export function Chart({
   title, 
   data, 
   className, 
-  height = 200, 
+  height: _height = 200, 
   showValues = true 
 }: ChartProps) {
   const maxValue = Math.max(...data.map(d => d.value));

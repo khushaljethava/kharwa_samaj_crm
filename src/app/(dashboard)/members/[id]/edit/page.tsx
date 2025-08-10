@@ -9,14 +9,20 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type PersonalInfo = Record<string, unknown>;
+type ContactInfo = Record<string, unknown>;
+type AddressInfo = Record<string, unknown>;
+type MembershipInfo = Record<string, unknown>;
+type Metadata = Record<string, unknown>;
+
 type MemberData = {
   id: string;
   member_code: string | null;
-  personal_info: Record<string, any> | null;
-  contact_info: Record<string, any> | null;
-  address_info: Record<string, any> | null;
-  membership_info: Record<string, any> | null;
-  metadata: Record<string, any> | null;
+  personal_info: PersonalInfo | null;
+  contact_info: ContactInfo | null;
+  address_info: AddressInfo | null;
+  membership_info: MembershipInfo | null;
+  metadata: Metadata | null;
   is_active?: boolean;
   is_deceased?: boolean;
 };
@@ -89,7 +95,7 @@ export default function EditMemberPage() {
       if (!res.ok) throw new Error("Failed to save");
       router.push(`/members/${memberId}`);
     } catch (e) {
-      alert((e as any)?.message || "Save failed");
+      alert((e as Error)?.message || "Save failed");
     } finally {
       setSaving(false);
     }

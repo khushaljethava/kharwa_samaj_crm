@@ -17,7 +17,7 @@ import {
   Moon,
   Menu,
   X,
-  Home,
+
   Building2,
   Bell,
   Settings

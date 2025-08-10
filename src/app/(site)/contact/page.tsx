@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { ContactForm } from "@/kharva/marketing/ContactForm";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 export const metadata: Metadata = {

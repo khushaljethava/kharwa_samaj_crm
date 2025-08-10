@@ -3,24 +3,30 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-type FamilyBuckets = {
-  parents: any[];
-  children: any[];
-  spouses: any[];
-  siblings: any[];
-  extended_family: any[];
-  in_law: any[];
-  guardian: any[];
+type FamilyMember = {
+  id: string;
+  personal_info?: Record<string, unknown> | null;
+  member_code?: string | null;
 };
 
-type NodeRect = { id: string; x: number; y: number; w: number; h: number; member: any };
+type FamilyBuckets = {
+  parents: FamilyMember[];
+  children: FamilyMember[];
+  spouses: FamilyMember[];
+  siblings: FamilyMember[];
+  extended_family: FamilyMember[];
+  in_law: FamilyMember[];
+  guardian: FamilyMember[];
+};
+
+type NodeRect = { id: string; x: number; y: number; w: number; h: number; member: FamilyMember };
 
 export default function MemberFamilyTreePage() {
   const params = useParams<{ id: string }>();
   const memberId = params.id;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [member, setMember] = useState<any | null>(null);
+  const [member, setMember] = useState<FamilyMember | null>(null);
   const [family, setFamily] = useState<FamilyBuckets | null>(null);
 
   useEffect(() => {
@@ -64,7 +70,7 @@ export default function MemberFamilyTreePage() {
   );
 }
 
-function TreeCanvas({ member, family }: { member: any; family: FamilyBuckets }) {
+function TreeCanvas({ member, family }: { member: FamilyMember; family: FamilyBuckets }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [rects, setRects] = useState<NodeRect[]>([]);
@@ -92,7 +98,6 @@ function TreeCanvas({ member, family }: { member: any; family: FamilyBuckets }) 
     if (!canvas || !container) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const paddingX = 48;
     const paddingY = 48;
     const nodeWidth = 160;
     const nodeHeight = 48;
@@ -139,7 +144,7 @@ function TreeCanvas({ member, family }: { member: any; family: FamilyBuckets }) 
     for (const level of levels) {
       const xs = xPositions(level.items.length, centerX);
       level.items.forEach((item: any, idx: number) => {
-        const label = level.key === "focus" ? (nodes.focus as any).label : displayName(item);
+        const _label = level.key === "focus" ? (nodes.focus as any).label : displayName(item);
         const id = level.key === "focus" ? (nodes.focus as any).id : item.id;
         computedRects.push({ id, x: xs[idx], y: level.y, w: nodeWidth, h: nodeHeight, member: level.key === "focus" ? nodes.focus.member : item });
       });
@@ -266,7 +271,7 @@ function TreeCanvas({ member, family }: { member: any; family: FamilyBuckets }) 
   );
 }
 
-function displayName(m: any) {
+function displayName(m: FamilyMember) {
   if (!m) return "—";
   const pi = (m.personal_info || {}) as Record<string, unknown>;
   const name = [pi.first_name as string, pi.middle_name as string, pi.last_name as string]

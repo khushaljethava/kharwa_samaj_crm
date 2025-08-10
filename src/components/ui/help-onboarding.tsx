@@ -6,8 +6,8 @@ import { Badge } from "./badge";
 import { 
   HelpCircle, 
   BookOpen, 
-  Video, 
-  MessageCircle, 
+
+
   CheckCircle,
   ChevronRight,
   ChevronLeft,

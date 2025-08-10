@@ -3,10 +3,21 @@ import Link from "next/link";
 import { StatCard } from "@/components/ui/stat-card";
 import { Chart, LineChart } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, AlertTriangle, HandCoins, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Users, HandCoins, DollarSign } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type MonthlyPoint = { label: string; value: number };
+
+// Define proper types for database records
+type InventoryItem = { id: string; stock_levels: { current?: number; min?: number } | null };
+type DonationRecord = { donation_date: string | null; amount: number | null };
+type RentRecord = { payment_month: string | null; amount_paid: number | null };
+type FeeRecord = { payment_date: string | null; amount: number | null };
+type RentalRecord = { created_at: string | null; total_amount: number | null };
+type MemberRecord = { id: string; member_code: string | null; created_at: string; is_active: boolean };
+type DonationDisplayRecord = { id: string; donor_name: string | null; amount: number | null; donation_date: string | null };
+type ExpenseRecord = { id: string; category: string | null; amount: number | null; expense_date: string | null; vendor: string | null };
+type FeePaymentRecord = { id: string; amount: number | null; payment_date: string | null; payment_method: string | null; receipt_number: string | null; status: string | null };
 
 async function fetchDashboardData() {
   const supabase = await createSupabaseServerClient();
@@ -60,7 +71,7 @@ async function fetchDashboardData() {
       supabase.from("fee_payments").select("id, amount, payment_date, payment_method, receipt_number, status").order("payment_date", { ascending: false }).limit(5),
     ]);
 
-    const items = (itemsRes.data || []) as Array<{ id: string; stock_levels: any }>;
+    const items = (itemsRes.data || []) as InventoryItem[];
     const lowStockCount = items.reduce((acc, it) => {
       const current = Number(it.stock_levels?.current ?? 0);
       const min = Number(it.stock_levels?.min ?? 0);
@@ -88,19 +99,19 @@ async function fetchDashboardData() {
     });
 
     const totalsByMonth: Record<string, number> = Object.fromEntries(monthKeys.map((k) => [k, 0]));
-    (donationsRes.data || []).forEach((r: any) => {
+    (donationsRes.data || []).forEach((r: DonationRecord) => {
       const k = toMonthKey(r.donation_date);
       if (k in totalsByMonth) totalsByMonth[k] += Number(r.amount || 0);
     });
-    (rentRes.data || []).forEach((r: any) => {
+    (rentRes.data || []).forEach((r: RentRecord) => {
       const k = toMonthKey(r.payment_month);
       if (k in totalsByMonth) totalsByMonth[k] += Number(r.amount_paid || 0);
     });
-    (feeRes.data || []).forEach((r: any) => {
+    (feeRes.data || []).forEach((r: FeeRecord) => {
       const k = toMonthKey(r.payment_date);
       if (k in totalsByMonth) totalsByMonth[k] += Number(r.amount || 0);
     });
-    (invRentalsRes.data || []).forEach((r: any) => {
+    (invRentalsRes.data || []).forEach((r: RentalRecord) => {
       const k = toMonthKey(r.created_at);
       if (k in totalsByMonth) totalsByMonth[k] += Number(r.total_amount || 0);
     });
@@ -223,7 +234,7 @@ export default async function DashboardHome() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(tables.recentMembers || []).map((m: any) => (
+                {(tables.recentMembers || []).map((m: MemberRecord) => (
                   <TableRow key={m.id}>
                     <TableCell>
                       <Link href={`/members/${m.id}`} className="text-primary hover:underline">{m.member_code || m.id.slice(0, 8)}</Link>
@@ -252,7 +263,7 @@ export default async function DashboardHome() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(tables.recentDonations || []).map((d: any) => (
+                {(tables.recentDonations || []).map((d: DonationDisplayRecord) => (
                   <TableRow key={d.id}>
                     <TableCell>{d.donor_name || "Anonymous"}</TableCell>
                     <TableCell>₹{Number(d.amount || 0).toLocaleString()}</TableCell>
@@ -281,7 +292,7 @@ export default async function DashboardHome() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(tables.recentExpenses || []).map((e: any) => (
+                {(tables.recentExpenses || []).map((e: ExpenseRecord) => (
                   <TableRow key={e.id}>
                     <TableCell>{e.category || e.vendor || "Expense"}</TableCell>
                     <TableCell>₹{Number(e.amount || 0).toLocaleString()}</TableCell>
@@ -308,7 +319,7 @@ export default async function DashboardHome() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(tables.recentFeePayments || []).map((p: any) => (
+                {(tables.recentFeePayments || []).map((p: FeePaymentRecord) => (
                   <TableRow key={p.id}>
                     <TableCell>{p.receipt_number || p.id.slice(0, 8)}</TableCell>
                     <TableCell>₹{Number(p.amount || 0).toLocaleString()}</TableCell>

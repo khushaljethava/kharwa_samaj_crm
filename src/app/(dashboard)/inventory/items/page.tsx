@@ -2,6 +2,14 @@ import Link from "next/link";
 import DeleteButton from "@/components/ui/DeleteButton";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+type InventoryItem = {
+  id: string;
+  sku: string;
+  item_details: Record<string, unknown> | null;
+  stock_levels?: Record<string, unknown> | null;
+  created_at?: string;
+};
+
 async function fetchItems() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -10,14 +18,14 @@ async function fetchItems() {
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []) as InventoryItem[];
 }
 
 export default async function ItemsPage() {
   const items = await fetchItems();
   const totals = {
     total: items.length,
-    low: items.filter((i: any) => {
+    low: items.filter((i: InventoryItem) => {
       const current = Number((i.stock_levels || {}).current ?? 0);
       const min = Number((i.stock_levels || {}).min ?? 0);
       return min > 0 && current <= min;
@@ -51,13 +59,7 @@ export default async function ItemsPage() {
           </thead>
           <tbody>
             {items.map(
-              (i: {
-                id: string;
-                sku: string;
-                item_details: Record<string, unknown> | null;
-                stock_levels?: Record<string, unknown> | null;
-                created_at?: string;
-              }) => {
+              (i: InventoryItem) => {
                 const details = (i.item_details || {}) as Record<string, unknown>;
                 const stock = (i.stock_levels || {}) as Record<string, unknown>;
                 const current = Number(stock.current ?? 0);

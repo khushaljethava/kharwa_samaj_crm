@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type Member = { id: string; name: string };
+type PersonalInfo = { first_name?: string; middle_name?: string; last_name?: string };
+type ApiMember = { id: string; personal_info: PersonalInfo | null; member_code: string | null };
+
 export default function NewDonationPage() {
   const router = useRouter();
-  const [members, setMembers] = useState<Array<{ id: string; name: string }>>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [memberId, setMemberId] = useState<string>("");
@@ -17,7 +21,7 @@ export default function NewDonationPage() {
     async function load() {
       const res = await fetch("/api/members?limit=100");
       const j = await res.json().catch(() => ({}));
-      setMembers((j?.data || []).map((m: any) => ({ id: m.id, name: displayName(m.personal_info, m.member_code, m.id) })));
+      setMembers((j?.data || []).map((m: ApiMember) => ({ id: m.id, name: displayName(m.personal_info, m.member_code, m.id) })));
     }
     load();
   }, []);
@@ -97,7 +101,7 @@ export default function NewDonationPage() {
   );
 }
 
-function displayName(pi?: any, code?: string, id?: string) {
+function displayName(pi?: PersonalInfo | null, code?: string | null, id?: string) {
   const name = [pi?.first_name, pi?.middle_name, pi?.last_name].filter(Boolean).join(" ");
   return name || code || id || "—";
 }

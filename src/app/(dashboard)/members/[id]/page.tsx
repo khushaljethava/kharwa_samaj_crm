@@ -5,6 +5,27 @@ import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import DeleteButton from "@/components/ui/DeleteButton";
 
+type MemberMetadata = {
+  photo_url?: string;
+  documents?: {
+    aadhar_url?: string;
+    pan_url?: string;
+    others?: string[];
+  };
+};
+
+type Member = {
+  id: string;
+  member_code: string | null;
+  personal_info: Record<string, unknown> | null;
+  contact_info: Record<string, unknown> | null;
+  address_info: Record<string, unknown> | null;
+  membership_info: Record<string, unknown> | null;
+  metadata: MemberMetadata | null;
+  is_active: boolean;
+  is_deceased: boolean;
+};
+
 async function fetchMember(id: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -13,15 +34,7 @@ async function fetchMember(id: string) {
     .eq("id", id)
     .single();
   if (error) return null;
-  return data as {
-    id: string;
-    member_code: string | null;
-    personal_info: Record<string, unknown> | null;
-    contact_info: Record<string, unknown> | null;
-    address_info: Record<string, unknown> | null;
-    membership_info: Record<string, unknown> | null;
-    metadata: Record<string, unknown> | null;
-  };
+  return data as Member;
 }
 
 export default async function MemberDetailPage(props: { params: Promise<{ id: string }> }) {
@@ -29,7 +42,7 @@ export default async function MemberDetailPage(props: { params: Promise<{ id: st
   const member = await fetchMember(id);
   if (!member) return notFound();
   const pi = (member.personal_info || {}) as Record<string, unknown>;
-  const meta = (member.metadata || {}) as Record<string, any>;
+  const meta = (member.metadata || {}) as MemberMetadata;
   const name = [pi.first_name as string, pi.middle_name as string, pi.last_name as string]
     .filter(Boolean)
     .join(" ") || "—";
@@ -197,7 +210,7 @@ async function FamilyTree({ memberId }: { memberId: string }) {
         family.extended_family.push(entry);
     }
   }
-  function renderList(key: string, list: Array<any>) {
+  function renderList(key: string, list: Array<{ id: string; name: string }>) {
     if (!list || list.length === 0) return null;
     return (
       <div className="rounded border p-4">

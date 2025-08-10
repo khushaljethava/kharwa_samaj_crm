@@ -4,6 +4,15 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Suspense } from "react";
 import { DateRangeFilter } from "./range";
 
+type Donation = {
+  id: string;
+  donor_name: string | null;
+  member_id: string | null;
+  amount: number;
+  donation_date: string;
+  payment_method: string | null;
+};
+
 async function fetchDonations(start?: string, end?: string) {
   const supabase = await createSupabaseServerClient();
   let query = supabase
@@ -15,7 +24,7 @@ async function fetchDonations(start?: string, end?: string) {
   if (end) query = query.lte("donation_date", end);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []) as Donation[];
 }
 
 export default async function DonationsPage({ searchParams }: { searchParams?: Promise<{ start?: string; end?: string }> }) {
@@ -43,7 +52,7 @@ export default async function DonationsPage({ searchParams }: { searchParams?: P
             </tr>
           </thead>
           <tbody>
-              {rows.map((d: any) => (
+              {rows.map((d: Donation) => (
               <tr key={d.id} className="border-t">
                 <td className="p-2">{d.donation_date}</td>
                 <td className="p-2">{d.donor_name || '—'}</td>

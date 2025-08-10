@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { Camera } from "lucide-react";
 
 type Props = {
@@ -56,7 +56,7 @@ export default function MemberPhotoUploader({ memberId, currentUrl }: Props) {
       setFile(null);
       router.refresh();
     } catch (e) {
-      // eslint-disable-next-line no-console
+    
       console.error(e);
       alert((e as any)?.message || "Upload failed");
     } finally {

@@ -4,6 +4,23 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+type RentalItem = {
+  item_id: string;
+  quantity: number;
+  unit_rate: number;
+};
+
+type Rental = {
+  id: string;
+  invoice_number: string | null;
+  member_id: string;
+  total_amount: number;
+  deposit: number;
+  status: string;
+  items: RentalItem[];
+  created_at: string;
+};
+
 async function fetchRental(id: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -12,7 +29,7 @@ async function fetchRental(id: string) {
     .eq("id", id)
     .single();
   if (error) return null;
-  return data as any;
+  return data as Rental;
 }
 
 export default async function RentalDetailPage(props: { params: Promise<{ id: string }> }) {
@@ -67,7 +84,7 @@ export default async function RentalDetailPage(props: { params: Promise<{ id: st
             </tr>
           </thead>
           <tbody>
-            {Array.isArray(rental.items) && rental.items.map((it: any, idx: number) => (
+            {Array.isArray(rental.items) && rental.items.map((it: RentalItem, idx: number) => (
               <tr key={idx} className="border-t">
                 <td className="p-2">{it.item_id}</td>
                 <td className="p-2">{it.quantity}</td>
@@ -82,7 +99,7 @@ export default async function RentalDetailPage(props: { params: Promise<{ id: st
   );
 }
 
-async function generateInvoicePdf(rental: any) {
+async function generateInvoicePdf(rental: Rental) {
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595.28, 841.89]); // A4 portrait
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -100,7 +117,7 @@ async function generateInvoicePdf(rental: any) {
 
   text("Items:", 50, y); y -= 18;
   const items = Array.isArray(rental.items) ? rental.items : [];
-  items.forEach((it: any, idx: number) => {
+  items.forEach((it: RentalItem, idx: number) => {
     const line = `${idx + 1}. Item: ${it.item_id}  Qty: ${it.quantity}  Rate: ${it.unit_rate}  Amount: ${(it.quantity || 0) * (it.unit_rate || 0)}`;
     text(line, 60, y);
     y -= 16;

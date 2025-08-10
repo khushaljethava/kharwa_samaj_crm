@@ -2,6 +2,15 @@ import Link from "next/link";
 import DeleteButton from "@/components/ui/DeleteButton";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+type Rental = {
+  id: string;
+  member_id: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+  invoice_number?: string | null;
+};
+
 async function fetchRentals() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -10,7 +19,7 @@ async function fetchRentals() {
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []) as Rental[];
 }
 
 export default async function InventoryRentalsPage() {
@@ -34,7 +43,7 @@ export default async function InventoryRentalsPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r: any) => (
+            {rows.map((r: Rental) => (
               <tr key={r.id} className="border-t">
                 <td className="p-2">{r.invoice_number || r.id.slice(0, 8)}</td>
                 <td className="p-2">{r.member_id}</td>

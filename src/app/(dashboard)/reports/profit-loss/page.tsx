@@ -1,17 +1,17 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Chart } from "@/components/ui/chart";
-import { Download, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { LineChart } from "@/components/ui/chart";
+import { Download, TrendingUp, TrendingDown } from "lucide-react";
 
 export default function ProfitLossReportPage() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
 
   async function run() {
     setLoading(true);

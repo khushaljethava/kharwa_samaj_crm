@@ -25,7 +25,7 @@ export default function DeleteButton({
       if (onDeleted) onDeleted();
       else window.location.reload();
     } catch (e) {
-      // eslint-disable-next-line no-alert
+
       alert((e as any)?.message || "Delete failed");
     } finally {
       setLoading(false);

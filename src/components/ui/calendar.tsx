@@ -47,8 +47,8 @@ export function Calendar({ events = [], className }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   
   const today = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getMonth();
+  const _currentMonth = currentDate.getMonth();
+  const _currentYear = currentDate.getFullYear();
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -80,7 +80,7 @@ export function Calendar({ events = [], className }: CalendarProps) {
     setCurrentDate(new Date());
   };
 
-  const { daysInMonth, startingDay } = getDaysInMonth(currentDate);
+  const { daysInMonth: _daysInMonth, startingDay: _startingDay } = getDaysInMonth(currentDate);
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -163,10 +163,10 @@ export function Calendar({ events = [], className }: CalendarProps) {
               <Button variant="outline" size="sm" onClick={goToToday}>
                 Today
               </Button>
-              <Button variant="outline" size="icon" size="sm" onClick={goToPreviousMonth}>
+              <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" size="sm" onClick={goToNextMonth}>
+              <Button variant="outline" size="sm" onClick={goToNextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

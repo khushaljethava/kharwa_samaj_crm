@@ -4,6 +4,16 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Suspense } from "react";
 import { DateRangeFilter } from "./range";
 
+type Expense = {
+  id: string;
+  expense_date: string;
+  category: string | null;
+  description: string | null;
+  amount: number;
+  vendor: string | null;
+  payment_method: string | null;
+};
+
 async function fetchExpenses(start?: string, end?: string) {
   const supabase = await createSupabaseServerClient();
   let q = supabase
@@ -15,7 +25,7 @@ async function fetchExpenses(start?: string, end?: string) {
   if (end) q = q.lte("expense_date", end);
   const { data, error } = await q;
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []) as Expense[];
 }
 
 export default async function ExpensesPage({ searchParams }: { searchParams?: Promise<{ start?: string; end?: string }> }) {
@@ -44,7 +54,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams?: Pr
             </tr>
           </thead>
           <tbody>
-            {rows.map((r: any) => (
+            {rows.map((r: Expense) => (
               <tr key={r.id} className="border-t">
                 <td className="p-2">{r.expense_date}</td>
                 <td className="p-2">{r.category || '—'}</td>
