@@ -1,0 +1,38 @@
+-- Seed five admin member profiles (application uses Supabase Auth; link email addresses here for reference)
+insert into members (personal_info, contact_info, address_info, membership_info, metadata)
+values
+  (
+    jsonb_build_object('first_name','Admin','last_name','One'),
+    jsonb_build_object('phone_primary','0000000001','email_primary','admin1@example.com'),
+    jsonb_build_object('current_address','HQ'),
+    jsonb_build_object('status','active'),
+    jsonb_build_object('role','Admin')
+  ),
+  (
+    jsonb_build_object('first_name','Admin','last_name','Two'),
+    jsonb_build_object('phone_primary','0000000002','email_primary','admin2@example.com'),
+    jsonb_build_object('current_address','HQ'),
+    jsonb_build_object('status','active'),
+    jsonb_build_object('role','Admin')
+  ),
+  (
+    jsonb_build_object('first_name','Admin','last_name','Three'),
+    jsonb_build_object('phone_primary','0000000003','email_primary','admin3@example.com'),
+    jsonb_build_object('current_address','HQ'),
+    jsonb_build_object('status','active'),
+    jsonb_build_object('role','Admin')
+  ),
+  (
+    jsonb_build_object('first_name','Admin','last_name','Four'),
+    jsonb_build_object('phone_primary','0000000004','email_primary','admin4@example.com'),
+    jsonb_build_object('current_address','HQ'),
+    jsonb_build_object('status','active'),
+    jsonb_build_object('role','Admin')
+  ),
+  (
+    jsonb_build_object('first_name','Admin','last_name','Five'),
+    jsonb_build_object('phone_primary','0000000005','email_primary','admin5@example.com'),
+    jsonb_build_object('current_address','HQ'),
+    jsonb_build_object('status','active'),
+    jsonb_build_object('role','Admin')
+  );
