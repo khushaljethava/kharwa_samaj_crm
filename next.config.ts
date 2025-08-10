@@ -1,11 +1,9 @@
 const nextConfig = {
-  // Use a different dist directory to avoid Windows file locks on .next/trace
-  distDir: ".next-dist",
-  // Skip ESLint during production build to prevent deployment failure on lint-only issues
+  // Use a different dist directory to avoid Windows file locks on .next/trace (only in development)
+  distDir: process.env.NODE_ENV === "production" ? ".next" : ".next-dist",
+  // ESLint is now enabled since all linting errors have been resolved
   eslint: {
-    ignoreDuringBuilds: true,
-    // Disable lint scanning entirely during build
-    dirs: [],
+    ignoreDuringBuilds: false,
   },
   // Also ignore TypeScript build errors to prevent CI failures due to types
   typescript: {
