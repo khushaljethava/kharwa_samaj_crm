@@ -16,6 +16,9 @@ export default function NewDonationPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [memberId, setMemberId] = useState<string>("");
+  
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     async function load() {
@@ -78,7 +81,7 @@ export default function NewDonationPage() {
         </div>
         <div>
           <Label htmlFor="donation_date">Date</Label>
-          <Input id="donation_date" name="donation_date" type="date" />
+          <Input id="donation_date" name="donation_date" type="date" defaultValue={today} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>

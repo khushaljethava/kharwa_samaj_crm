@@ -8,12 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MemberPhotoUploader from "@/components/members/MemberPhotoUploader";
+import MemberDocumentUploader from "@/components/members/MemberDocumentUploader";
+import MemberPaymentManager from "@/components/members/MemberPaymentManager";
 
 type PersonalInfo = Record<string, unknown>;
 type ContactInfo = Record<string, unknown>;
 type AddressInfo = Record<string, unknown>;
 type MembershipInfo = Record<string, unknown>;
-type Metadata = Record<string, unknown>;
+type Metadata = {
+  photo_url?: string;
+  documents?: {
+    aadhar_url?: string;
+    pan_url?: string;
+    others?: string[];
+  };
+} & Record<string, unknown>;
 
 type MemberData = {
   id: string;
@@ -149,6 +159,29 @@ export default function EditMemberPage() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Photo Upload Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Photo</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MemberPhotoUploader 
+            memberId={memberId} 
+            currentUrl={(member.metadata as Metadata)?.photo_url || null} 
+          />
+        </CardContent>
+      </Card>
+
+      {/* Document Upload Section */}
+      <MemberDocumentUploader 
+        memberId={memberId} 
+        currentDocuments={(member.metadata as Metadata)?.documents || null} 
+      />
+
+      {/* Payment Management Section */}
+      <MemberPaymentManager memberId={memberId} />
+      
       <div className="flex gap-3">
         <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>
         <Link className="px-3 py-2 rounded border text-sm" href={`/members/${memberId}`}>Discard</Link>

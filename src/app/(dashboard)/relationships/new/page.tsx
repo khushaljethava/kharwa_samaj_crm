@@ -26,7 +26,10 @@ export default function NewRelationshipPage() {
   const [member2, setMember2] = useState("");
   const [relType, setRelType] = useState("spousal");
   const [relStatus, setRelStatus] = useState("");
-  const [startDate, setStartDate] = useState("");
+  
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState("");
 
   useEffect(() => {

@@ -6,13 +6,49 @@ import { rateLimit } from "@/lib/rate-limit";
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
+  const subscription_id = searchParams.get("subscription_id");
+  const year = searchParams.get("year");
+  
   const supabase = await createSupabaseServerClient();
-  let q = supabase
+  let query = supabase
     .from("fee_payments")
-    .select("id, subscription_id, amount, payment_date, payment_method, receipt_number, status")
+    .select(`
+      id, 
+      subscription_id, 
+      amount, 
+      payment_date, 
+      payment_method, 
+      receipt_number, 
+      status,
+      transaction_id,
+      membership_subscriptions!inner (
+        id,
+        start_date,
+        end_date,
+        status,
+        members!inner (
+          id,
+          member_code,
+          personal_info
+        ),
+        membership_plans!inner (
+          plan_name,
+          billing_cycle,
+          fee_amount
+        )
+      )
+    `)
     .order("payment_date", { ascending: false });
-  if (id) q = q.eq("id", id);
-  const { data, error } = await q.limit(100);
+
+  if (id) query = query.eq("id", id);
+  if (subscription_id) query = query.eq("subscription_id", subscription_id);
+  if (year) {
+    const startOfYear = `${year}-01-01`;
+    const endOfYear = `${year}-12-31`;
+    query = query.gte("payment_date", startOfYear).lte("payment_date", endOfYear);
+  }
+
+  const { data, error } = await query.limit(500);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });
 }

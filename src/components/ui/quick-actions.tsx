@@ -7,7 +7,8 @@ import {
   ReceiptText, 
   HandCoins, 
   Plus,
-  ArrowRight
+  ArrowRight,
+  CreditCard
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
@@ -36,11 +37,18 @@ const quickActions: QuickAction[] = [
     variant: "info",
   },
   {
-    title: "Collect Payment",
-    description: "Record rent or fee payment",
+    title: "Collect Rent",
+    description: "Record rent payment",
     icon: HandCoins,
     href: "/rent/collections/new",
     variant: "default",
+  },
+  {
+    title: "Membership Payment",
+    description: "Record membership fee payment",
+    icon: CreditCard,
+    href: "/membership/payments/new",
+    variant: "info",
   },
   {
     title: "Record Expense",
@@ -61,7 +69,7 @@ export function QuickActions() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (

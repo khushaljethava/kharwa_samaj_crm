@@ -17,7 +17,8 @@ import {
   Moon,
   Menu,
   X,
-
+  CreditCard,
+  UserCheck,
   Building2,
   Bell,
   Settings
@@ -54,6 +55,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     () => [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/members", label: "Members", icon: Users },
+      { href: "/membership/payments", label: "Membership Payments", icon: CreditCard },
+      { href: "/membership/subscriptions", label: "Subscriptions", icon: UserCheck },
       { href: "/inventory/items", label: "Inventory", icon: Package },
       { href: "/inventory/rentals", label: "Rentals", icon: ReceiptText },
       { href: "/rent/collections", label: "Rent", icon: HandCoins },

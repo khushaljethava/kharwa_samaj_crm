@@ -132,13 +132,13 @@ export default function NewMemberPage() {
     async function uploadFile(file: File, folder: string) {
       const fileExt = file.name.split(".").pop() || "dat";
       const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
-      const { error: upErr } = await supabase.storage.from("members").upload(fileName, file, {
+      const { error: upErr } = await supabase.storage.from("samaj").upload(fileName, file, {
         cacheControl: "3600",
         upsert: false,
         contentType: file.type || undefined,
       });
       if (upErr) throw new Error(upErr.message);
-      const { data } = supabase.storage.from("members").getPublicUrl(fileName);
+      const { data } = supabase.storage.from("samaj").getPublicUrl(fileName);
       return data.publicUrl;
     }
 
@@ -158,7 +158,13 @@ export default function NewMemberPage() {
         }
       }
     } catch (e: any) {
-      toast.error(`Upload failed: ${e?.message || "Unknown error"}`);
+      console.error("Upload error:", e);
+      const errorMessage = e?.message || "Unknown error";
+      if (errorMessage.includes("Bucket not found")) {
+        toast.error("Storage bucket not configured. Please contact admin to set up file storage.");
+      } else {
+        toast.error(`Upload failed: ${errorMessage}`);
+      }
       return;
     }
 

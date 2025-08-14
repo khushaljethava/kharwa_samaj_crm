@@ -26,7 +26,10 @@ export default function NewInventoryRentalPage() {
   ]);
   const [memberId, setMemberId] = useState<string>("");
   const [deposit, setDeposit] = useState<number>(0);
-  const [dueDate, setDueDate] = useState<string>("");
+  
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+  const [dueDate, setDueDate] = useState<string>(today);
   const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

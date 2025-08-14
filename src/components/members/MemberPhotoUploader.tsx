@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-
 import { Camera } from "lucide-react";
 
 type Props = {
@@ -26,10 +25,10 @@ export default function MemberPhotoUploader({ memberId, currentUrl }: Props) {
       const ext = file.name.split(".").pop() || "jpg";
       const path = `photos/${memberId}-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
-        .from("members")
+        .from("samaj")
         .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("members").getPublicUrl(path);
+      const { data: pub } = supabase.storage.from("samaj").getPublicUrl(path);
       const photo_url = pub.publicUrl;
 
       // Fetch existing member to preserve fields
@@ -56,9 +55,13 @@ export default function MemberPhotoUploader({ memberId, currentUrl }: Props) {
       setFile(null);
       router.refresh();
     } catch (e) {
-    
-      console.error(e);
-      alert((e as any)?.message || "Upload failed");
+      console.error("Photo upload error:", e);
+      const errorMessage = (e as any)?.message || "Upload failed";
+      if (errorMessage.includes("Bucket not found")) {
+        alert("Storage bucket not configured. Please contact admin to set up file storage.");
+      } else {
+        alert(`Upload failed: ${errorMessage}`);
+      }
     } finally {
       setUploading(false);
     }

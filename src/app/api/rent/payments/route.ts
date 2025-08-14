@@ -35,10 +35,25 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const supabase = await createSupabaseServerClient();
+  
+  // Convert YYYY-MM format to YYYY-MM-01 for proper date insertion
+  const formatPaymentMonth = (monthString: string): string => {
+    // If it's already a full date, return as is
+    if (/^\d{4}-\d{2}-\d{2}/.test(monthString)) {
+      return monthString;
+    }
+    // If it's YYYY-MM format, append -01
+    if (/^\d{4}-\d{2}$/.test(monthString)) {
+      return `${monthString}-01`;
+    }
+    // Otherwise, assume it needs formatting
+    return monthString;
+  };
+
   // Store the source_id into metadata to avoid altering existing schema
   const insertBody = {
-    ...(parsed.data.agreement_id ? { agreement_id: parsed.data.agreement_id } : {}),
-    payment_month: parsed.data.payment_month,
+    agreement_id: parsed.data.agreement_id || null, // Allow null agreement_id
+    payment_month: formatPaymentMonth(parsed.data.payment_month),
     amount_due: parsed.data.amount_due,
     amount_paid: parsed.data.amount_paid,
     payment_date: parsed.data.payment_date || null,

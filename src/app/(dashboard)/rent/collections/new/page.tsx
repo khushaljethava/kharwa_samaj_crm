@@ -7,26 +7,53 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type RentSource = { id: string; name: string };
+type RentalAgreement = { 
+  id: string; 
+  property_id: string;
+  agreement_details: any;
+  monthly_rent: number;
+  status: string;
+  properties?: {
+    property_code: string;
+    property_details: any;
+  };
+};
 
 export default function NewRentPaymentPage() {
   const router = useRouter();
   const [sources, setSources] = useState<RentSource[]>([]);
+  const [agreements, setAgreements] = useState<RentalAgreement[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Get current month in YYYY-MM format
+  const currentMonth = new Date().toISOString().slice(0, 7);
 
   useEffect(() => {
-    async function loadSources() {
-      const res = await fetch("/api/rent/sources");
-      const json = await res.json().catch(() => ({}));
-      setSources((json?.data || []).filter((s: any) => s.is_active));
+    async function loadData() {
+      // Load rent sources
+      const sourcesRes = await fetch("/api/rent/sources");
+      const sourcesJson = await sourcesRes.json().catch(() => ({}));
+      setSources((sourcesJson?.data || []).filter((s: any) => s.is_active));
+
+      // Load rental agreements (optional)
+      try {
+        const agreementsRes = await fetch("/api/rental-agreements?status=active");
+        const agreementsJson = await agreementsRes.json().catch(() => ({}));
+        setAgreements(agreementsJson?.data || []);
+      } catch (err) {
+        // Rental agreements API might not exist yet, that's okay
+        console.log("Rental agreements not available:", err);
+      }
     }
-    loadSources();
+    loadData();
   }, []);
 
   async function onSubmit(formData: FormData) {
     setLoading(true);
     setError(null);
     const body = {
+      agreement_id: String(formData.get("agreement_id") || "") || null,
       payment_month: String(formData.get("payment_month") || ""),
       months_covered: Number(formData.get("months_covered") || 1),
       amount_due: Number(formData.get("amount_due") || 0),
@@ -53,10 +80,32 @@ export default function NewRentPaymentPage() {
     <div className="space-y-6 max-w-xl">
       <h1 className="text-xl font-semibold">New Rent Payment</h1>
       <form action={onSubmit} className="space-y-4">
-        {/* Agreement ID removed */}
+        {/* Optional Rental Agreement Selection */}
+        {agreements.length > 0 && (
+          <div>
+            <Label htmlFor="agreement_id">Rental Agreement (Optional)</Label>
+            <Select onValueChange={(v) => {
+              const el = document.querySelector<HTMLInputElement>('input[name="agreement_id"]');
+              if (el) el.value = v;
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select agreement (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None (General rent payment)</SelectItem>
+                {agreements.map((agreement) => (
+                  <SelectItem key={agreement.id} value={agreement.id}>
+                    {agreement.properties?.property_code || `Property ${agreement.property_id.slice(0, 8)}`} - ₹{agreement.monthly_rent}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="agreement_id" />
+          </div>
+        )}
         <div>
           <Label htmlFor="payment_month">Payment Month</Label>
-          <Input name="payment_month" id="payment_month" type="month" required />
+          <Input name="payment_month" id="payment_month" type="month" defaultValue={currentMonth} required />
         </div>
         <div>
           <Label htmlFor="months_covered">Months Covered</Label>

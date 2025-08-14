@@ -5,13 +5,18 @@ import { useEffect, useState } from "react";
 export function DateRangeFilter({ basePath }: { basePath: string }) {
   const router = useRouter();
   const sp = useSearchParams();
-  const [start, setStart] = useState<string>(sp.get("start") || "");
-  const [end, setEnd] = useState<string>(sp.get("end") || "");
+  
+  // Get today's date and first day of current month in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+  const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  
+  const [start, setStart] = useState<string>(sp.get("start") || firstDayOfMonth);
+  const [end, setEnd] = useState<string>(sp.get("end") || today);
 
   useEffect(() => {
-    setStart(sp.get("start") || "");
-    setEnd(sp.get("end") || "");
-  }, [sp]);
+    setStart(sp.get("start") || firstDayOfMonth);
+    setEnd(sp.get("end") || today);
+  }, [sp, firstDayOfMonth, today]);
 
   function apply() {
     const q = new URLSearchParams();

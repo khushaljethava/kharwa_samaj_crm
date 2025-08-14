@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const limitParam = searchParams.get("limit");
   const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 0, 1), 500) : 100;
 
-  const { data, error } = await supabase.from("members").select("*").order("created_at", { ascending: false }).limit(limit);
+  const { data, error } = await supabase.from("members").select("*").order("member_code", { ascending: true }).limit(limit);
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });

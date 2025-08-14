@@ -7,8 +7,12 @@ import { LineChart } from "@/components/ui/chart";
 import { Download, TrendingUp, TrendingDown } from "lucide-react";
 
 export default function ProfitLossReportPage() {
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  // Get today's date and first day of current month in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+  const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  
+  const [start, setStart] = useState(firstDayOfMonth);
+  const [end, setEnd] = useState(today);
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [_error, setError] = useState<string | null>(null);

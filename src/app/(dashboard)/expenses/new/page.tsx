@@ -9,6 +9,9 @@ export default function NewExpensePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
 
   async function onSubmit(formData: FormData) {
     setLoading(true);
@@ -41,7 +44,7 @@ export default function NewExpensePage() {
       <form action={onSubmit} className="space-y-4">
         <div>
           <Label htmlFor="expense_date">Date</Label>
-          <Input id="expense_date" name="expense_date" type="date" />
+          <Input id="expense_date" name="expense_date" type="date" defaultValue={today} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
