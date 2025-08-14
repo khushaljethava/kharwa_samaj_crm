@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function NewInventoryItemPage() {
   const router = useRouter();
@@ -20,16 +21,32 @@ export default function NewInventoryItemPage() {
       pricing_info: { price },
       stock_levels: { current: 0, min: minQty },
     };
-    const res = await fetch("/api/inventory/items", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    setLoading(false);
-    if (res.ok) router.push("/inventory/items");
-    else {
-      const j = await res.json().catch(() => ({}));
-      setError(j?.error || "Failed to create item");
+    try {
+      const res = await fetch("/api/inventory/items", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      
+      setLoading(false);
+      
+      if (res.ok) {
+        toast.success("✅ Inventory item created successfully!");
+        router.push("/inventory/items");
+        return;
+      }
+      
+      const errorData = await res.json().catch(() => ({}));
+      const errorMessage = errorData?.error || "Failed to create item";
+      
+      setError(errorMessage);
+      toast.error(`❌ ${errorMessage}`);
+      
+    } catch (err) {
+      setLoading(false);
+      const errorMessage = "Network error. Please try again.";
+      setError(errorMessage);
+      toast.error(`❌ ${errorMessage}`);
     }
   }
 

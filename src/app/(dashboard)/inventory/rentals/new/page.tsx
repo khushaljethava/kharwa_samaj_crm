@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MinusCircle, PlusCircle } from "lucide-react";
+import { handleStockErrors, showStockSuccess, type StockErrorResponse } from "@/lib/utils/stock-errors";
 
 type MemberLite = { id: string; name: string };
 type ItemLite = { 
@@ -13,6 +15,7 @@ type ItemLite = {
   name: string;
   item_details?: { name?: string } | null;
   sku?: string;
+  stock_levels?: { current?: number; min?: number } | null;
 };
 type PersonalInfo = { first_name?: string; middle_name?: string; last_name?: string };
 type ApiMember = { id: string; personal_info: PersonalInfo | null; member_code: string | null };
@@ -24,6 +27,18 @@ export default function NewInventoryRentalPage() {
   const [lines, setLines] = useState<Array<{ item_id: string; quantity: number; unit_rate: number }>>([
     { item_id: "", quantity: 1, unit_rate: 0 },
   ]);
+  
+  // Create a map for quick item lookup
+  const itemsMap = useMemo(() => {
+    const map = new Map<string, { name: string; sku?: string }>();
+    items.forEach(item => {
+      map.set(item.id, { 
+        name: item.name, 
+        sku: item.sku 
+      });
+    });
+    return map;
+  }, [items]);
   const [memberId, setMemberId] = useState<string>("");
   const [deposit, setDeposit] = useState<number>(0);
   
@@ -46,9 +61,11 @@ export default function NewInventoryRentalPage() {
         id: r.id,
         name: displayName(r.personal_info, r.member_code, r.id),
       })));
-      setItems((i?.data || []).map((it: ItemLite) => ({
+      setItems((i?.data || []).map((it: any) => ({
         id: it.id,
         name: it.item_details?.name || it.sku || it.id,
+        sku: it.sku,
+        stock_levels: it.stock_levels,
       })));
     }
     load();
@@ -60,6 +77,22 @@ export default function NewInventoryRentalPage() {
 
   function updateLine(index: number, patch: Partial<{ item_id: string; quantity: number; unit_rate: number }>) {
     setLines((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
+    
+    // Check stock availability if quantity is being updated
+    if (patch.quantity) {
+      const line = lines[index];
+      const itemId = patch.item_id || line.item_id;
+      const item = items.find(it => it.id === itemId);
+      const available = item?.stock_levels?.current || 0;
+      
+      if (patch.quantity > available && available > 0) {
+        const itemName = item?.name || 'Selected item';
+        toast.error(`⚠️ ${itemName}: Only ${available} units available (requesting ${patch.quantity})`, {
+          duration: 4000,
+          icon: '⚠️',
+        });
+      }
+    }
   }
 
   function addLine() {
@@ -73,6 +106,7 @@ export default function NewInventoryRentalPage() {
   async function onSubmit() {
     setLoading(true);
     setError(null);
+    
     const body = {
       member_id: memberId,
       items: lines,
@@ -81,16 +115,47 @@ export default function NewInventoryRentalPage() {
       due_date: dueDate || undefined,
       notes: notes || undefined,
     };
-    const res = await fetch("/api/rentals", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    setLoading(false);
-    if (res.ok) router.push("/inventory/rentals");
-    else {
-      const j = await res.json().catch(() => ({}));
-      setError(j?.error ? JSON.stringify(j.error) : "Failed to create");
+    
+    try {
+      const res = await fetch("/api/rentals", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      
+      setLoading(false);
+      
+      if (res.ok) {
+        showStockSuccess("Rental created successfully!");
+        router.push("/inventory/rentals");
+        return;
+      }
+      
+      const errorData = await res.json().catch(() => ({}));
+      
+      // Handle stock-specific errors
+      if (res.status === 400 && errorData?.error && typeof errorData.error === 'object') {
+        const stockError = errorData.error as StockErrorResponse;
+        if (stockError.message?.includes("Insufficient stock") && stockError.details) {
+          handleStockErrors(stockError, itemsMap);
+          return;
+        }
+      }
+      
+      // Handle other errors
+      const errorMessage = typeof errorData?.error === 'string' 
+        ? errorData.error 
+        : errorData?.error?.message 
+        || "Failed to create rental";
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
+      
+    } catch (err) {
+      setLoading(false);
+      const errorMessage = "Network error. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   }
 
@@ -125,15 +190,50 @@ export default function NewInventoryRentalPage() {
                     <SelectValue placeholder="Select item" />
                   </SelectTrigger>
                   <SelectContent>
-                    {items.map((it) => (
-                      <SelectItem key={it.id} value={it.id}>{it.name}</SelectItem>
-                    ))}
+                    {items.map((it) => {
+                      const stock = it.stock_levels?.current || 0;
+                      const stockText = stock > 0 ? ` (${stock} available)` : ' (Out of stock)';
+                      const isOutOfStock = stock === 0;
+                      
+                      return (
+                        <SelectItem 
+                          key={it.id} 
+                          value={it.id}
+                          disabled={isOutOfStock}
+                          className={isOutOfStock ? 'text-red-500 opacity-50' : ''}
+                        >
+                          {it.name}{stockText}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>Qty</Label>
-                <Input type="number" min={1} value={line.quantity} onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} />
+                {(() => {
+                  const item = items.find(it => it.id === line.item_id);
+                  const maxStock = item?.stock_levels?.current || 999;
+                  const isOverStock = line.quantity > maxStock;
+                  
+                  return (
+                    <div className="relative">
+                      <Input 
+                        type="number" 
+                        min={1} 
+                        max={maxStock}
+                        value={line.quantity} 
+                        onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })}
+                        className={isOverStock ? 'border-red-500 bg-red-50' : ''}
+                      />
+                      {isOverStock && maxStock < 999 && (
+                        <div className="text-xs text-red-600 mt-1">
+                          Max available: {maxStock}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
               <div>
                 <Label>Unit Rate</Label>
