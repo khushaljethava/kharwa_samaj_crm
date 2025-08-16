@@ -12,7 +12,6 @@ export async function middleware(req: NextRequest) {
     "/rent",
     "/purchases",
     "/sales",
-    "/membership",
     "/properties",
   ];
   const isProtected = protectedPrefixes.some((p) => url.pathname.startsWith(p));
@@ -43,7 +42,6 @@ export const config = {
     "/rent/:path*",
     "/purchases/:path*",
     "/sales/:path*",
-    "/membership/:path*",
     "/properties/:path*",
   ],
 };

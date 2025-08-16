@@ -43,19 +43,20 @@ const quickActions: QuickAction[] = [
     href: "/rent/collections/new",
     variant: "default",
   },
-  {
-    title: "Membership Payment",
-    description: "Record membership fee payment",
-    icon: CreditCard,
-    href: "/membership/payments/new",
-    variant: "info",
-  },
+
   {
     title: "Record Expense",
     description: "Log company expense",
     icon: ReceiptText,
     href: "/expenses/new",
     variant: "warning",
+  },
+  {
+    title: "Collect Membership Fee",
+    description: "Record membership payment",
+    icon: CreditCard,
+    href: "/dashboard/membership-fee",
+    variant: "success",
   },
 ];
 

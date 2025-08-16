@@ -18,8 +18,8 @@ CREATE UNIQUE INDEX idx_rent_unique_with_nulls ON rent_payments(agreement_id, pa
 WHERE agreement_id IS NOT NULL;
 
 -- Add an index for better performance on queries without agreement_id
-CREATE INDEX idx_rent_payments_month ON rent_payments(payment_month);
-CREATE INDEX idx_rent_payments_status ON rent_payments(status);
+CREATE INDEX IF NOT EXISTS idx_rent_payments_month ON rent_payments(payment_month);
+CREATE INDEX IF NOT EXISTS idx_rent_payments_status ON rent_payments(status);
 
 -- For data integrity, let's create a default "General" property and agreement
 -- that can be used for rent payments that don't belong to specific agreements

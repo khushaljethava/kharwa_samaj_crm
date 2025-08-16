@@ -1,66 +1,93 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { generateMembershipInvoicePdf } from "@/lib/utils/membership-invoice-pdf";
+import { format } from "date-fns";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { id } = await ctx.params;
-  const supabase = await createSupabaseServerClient();
-  const { data: payment, error } = await supabase
-    .from("fee_payments")
-    .select("id, receipt_number, amount, payment_date, payment_method, subscription_id")
-    .eq("id", id)
-    .single();
-  if (error || !payment)
-    return NextResponse.json({ error: error?.message || "Not found" }, { status: 404 });
+  try {
+    const { id } = await ctx.params;
+    const supabase = await createSupabaseServerClient();
+    
+    // Fetch payment details with related member and plan information
+    const { data: payment, error } = await supabase
+      .from("fee_payments")
+      .select(`
+        id,
+        receipt_number,
+        amount,
+        payment_date,
+        payment_method,
+        transaction_id,
+        membership_subscriptions!inner (
+          id,
+          start_date,
+          end_date,
+          members!inner (
+            id,
+            member_code,
+            personal_info
+          ),
+          membership_plans!inner (
+            plan_name,
+            plan_type,
+            billing_cycle
+          )
+        )
+      `)
+      .eq("id", id)
+      .single();
 
-  const { data: sub } = await supabase
-    .from("membership_subscriptions")
-    .select("id, member_id, plan_id, start_date, end_date")
-    .eq("id", payment.subscription_id)
-    .single();
-  const { data: member } = await supabase
-    .from("members")
-    .select("member_code, personal_info")
-    .eq("id", sub?.member_id)
-    .single();
-  const { data: plan } = await supabase
-    .from("membership_plans")
-    .select("plan_name, plan_type")
-    .eq("id", sub?.plan_id)
-    .single();
+    if (error || !payment) {
+      return NextResponse.json({ error: error?.message || "Payment not found" }, { status: 404 });
+    }
 
-  const pdf = await PDFDocument.create();
-  const page = pdf.addPage([595.28, 841.89]); // A4
-  const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const draw = (text: string, x: number, y: number, size = 12) => {
-    page.drawText(text, { x, y, size, font, color: rgb(0, 0, 0) });
-  };
+    // Extract nested data safely
+    const subscription = payment.membership_subscriptions;
+    const member = subscription.members;
+    const plan = subscription.membership_plans;
+    
+    // Get member name from personal_info
+    const personalInfo = member.personal_info as Record<string, string>;
+    const memberName = [
+      personalInfo?.first_name,
+      personalInfo?.middle_name,
+      personalInfo?.last_name
+    ]
+      .filter(Boolean)
+      .join(" ") || `Member ${member.member_code}`;
 
-  // Header
-  draw("SHREE MANDVI KHARVA SAMAJ", 180, 800, 16);
-  draw(`Receipt No: ${payment.receipt_number}`, 40, 770);
-  draw(`Date: ${new Date(payment.payment_date as unknown as string).toLocaleDateString()}`, 420, 770);
+    // Format payment date
+    const paymentDate = format(new Date(payment.payment_date), "dd/MM/yyyy");
 
-  // Body
-  const pi = (member?.personal_info || {}) as Record<string, unknown>;
-  const name = [pi.first_name as string, pi.middle_name as string, pi.last_name as string]
-    .filter(Boolean)
-    .join(" ") || "Member";
-  draw(`Member: ${name} (${member?.member_code || "-"})`, 40, 740);
-  draw(`Plan: ${plan?.plan_name || "-"} (${plan?.plan_type || "-"})`, 40, 720);
-  draw(`Amount: ₹ ${Number(payment.amount).toFixed(2)}`, 40, 700);
-  draw(`Method: ${payment.payment_method || "-"}`, 40, 680);
+    // Prepare data for PDF generation
+    const invoiceData = {
+      receiptNumber: payment.receipt_number || `RCPT-${payment.id.substring(0, 8)}`,
+      memberName: memberName,
+      amount: Number(payment.amount),
+      paymentDate: paymentDate,
+      paymentMethod: payment.payment_method,
+      planName: plan.plan_name,
+      additionalDetails: `${plan.plan_type} - ${plan.billing_cycle}`
+    };
 
-  // Footer signature area (blank)
-  draw("Signature:", 40, 640);
+    // Generate PDF using the new template-based generator
+    const pdfBytes = await generateMembershipInvoicePdf(invoiceData);
 
-  const bytes = await pdf.save();
-  return new NextResponse(Buffer.from(bytes), {
-    headers: {
-      "content-type": "application/pdf",
-      "content-disposition": `inline; filename="receipt-${payment.receipt_number}.pdf"`,
-    },
-  });
+    // Return PDF for inline viewing
+    return new NextResponse(Buffer.from(pdfBytes), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="receipt-${payment.receipt_number}.pdf"`,
+        "Cache-Control": "no-cache"
+      },
+    });
+  } catch (error) {
+    console.error("Error generating membership payment invoice:", error);
+    return NextResponse.json(
+      { error: "Failed to generate invoice" }, 
+      { status: 500 }
+    );
+  }
 }
 
 

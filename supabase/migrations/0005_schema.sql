@@ -1,18 +1,17 @@
 -- Ensure uuid-ossp extension is enabled for uuid_generate_v4()
 create extension if not exists "uuid-ossp";
 
--- Ensure jsonb extension is enabled for jsonb data type
-create extension if not exists "jsonb";
-
 -- Relationship Type Enum
-create type relationship_type as enum (
-  'parent_child',
-  'spousal',
-  'sibling',
-  'extended_family',
-  'in_law',
-  'guardian'
-);
+do $$ begin
+  create type relationship_type as enum (
+    'parent_child',
+    'spousal',
+    'sibling',
+    'extended_family',
+    'in_law',
+    'guardian'
+  );
+exception when duplicate_object then null; end $$;
 
 
 -- 1. members table
@@ -231,7 +230,7 @@ create table if not exists membership_subscriptions (
 
   -- A member can only have one active subscription to a specific plan at a time?
   -- Unique constraint might need refinement based on business logic (e.g., can a member have multiple *different* plans?)
-  unique (member_id, plan_id, status) where (status = 'active')
+  unique (member_id, plan_id)
 );
 
 comment on table membership_subscriptions is 'Tracks active and past membership subscriptions for members.';
@@ -300,27 +299,27 @@ comment on table audit_logs is 'Logs user and system actions for auditing purpos
 
 
 -- Add Indexes for frequently queried columns
-create index idx_members_is_active on members(is_active);
-create index idx_members_is_deceased on members(is_deceased);
-create index idx_relationships_member_1_id on relationships(member_1_id);
-create index idx_relationships_member_2_id on relationships(member_2_id);
-create index idx_inventory_items_category_id on inventory_items(category_id); -- if categories table is implemented
-create index idx_inventory_items_sku on inventory_items(sku);
-create index idx_inventory_transactions_item_id on inventory_transactions(item_id);
-create index idx_inventory_transactions_transaction_type on inventory_transactions(transaction_type);
-create index idx_properties_owner_member_id on properties(owner_member_id);
-create index idx_rental_agreements_property_id on rental_agreements(property_id);
-create index idx_rental_agreements_tenant_id on rental_agreements(tenant_id); -- if tenants table is implemented
-create index idx_rent_payments_agreement_id on rent_payments(agreement_id);
-create index idx_purchases_supplier_id on purchases(supplier_id); -- if suppliers table is implemented
-create index idx_sales_customer_id on sales(customer_id);
-create index idx_membership_subscriptions_member_id on membership_subscriptions(member_id);
-create index idx_membership_subscriptions_plan_id on membership_subscriptions(plan_id);
-create index idx_membership_subscriptions_status on membership_subscriptions(status);
-create index idx_fee_payments_subscription_id on fee_payments(subscription_id);
-create index idx_audit_logs_user_id on audit_logs(user_id);
-create index idx_audit_logs_action on audit_logs(action);
-create index idx_audit_logs_table_name_record_id on audit_logs(table_name, record_id);
+create index if not exists idx_members_is_active on members(is_active);
+create index if not exists idx_members_is_deceased on members(is_deceased);
+create index if not exists idx_relationships_member_1_id on relationships(member_1_id);
+create index if not exists idx_relationships_member_2_id on relationships(member_2_id);
+create index if not exists idx_inventory_items_category_id on inventory_items(category_id); -- if categories table is implemented
+create index if not exists idx_inventory_items_sku on inventory_items(sku);
+create index if not exists idx_inventory_transactions_item_id on inventory_transactions(item_id);
+create index if not exists idx_inventory_transactions_transaction_type on inventory_transactions(transaction_type);
+create index if not exists idx_properties_owner_member_id on properties(owner_member_id);
+create index if not exists idx_rental_agreements_property_id on rental_agreements(property_id);
+create index if not exists idx_rental_agreements_tenant_id on rental_agreements(tenant_id); -- if tenants table is implemented
+create index if not exists idx_rent_payments_agreement_id on rent_payments(agreement_id);
+create index if not exists idx_purchases_supplier_id on purchases(supplier_id); -- if suppliers table is implemented
+create index if not exists idx_sales_customer_id on sales(customer_id);
+create index if not exists idx_membership_subscriptions_member_id on membership_subscriptions(member_id);
+create index if not exists idx_membership_subscriptions_plan_id on membership_subscriptions(plan_id);
+create index if not exists idx_membership_subscriptions_status on membership_subscriptions(status);
+create index if not exists idx_fee_payments_subscription_id on fee_payments(subscription_id);
+create index if not exists idx_audit_logs_user_id on audit_logs(user_id);
+create index if not exists idx_audit_logs_action on audit_logs(action);
+create index if not exists idx_audit_logs_table_name_record_id on audit_logs(table_name, record_id);
 
 
 -- Enable Row Level Security (RLS) - requires policies to be defined separately

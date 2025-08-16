@@ -7,11 +7,12 @@ do $$ begin
   create policy rent_sources_select on rent_sources for select using (true);
 exception when duplicate_object then null; end $$;
 
-do $$ begin
-  create policy rent_sources_write_admin on rent_sources for all
-  using (auth_role() in ('app_manager','app_admin'))
-  with check (auth_role() in ('app_manager','app_admin'));
-exception when duplicate_object then null; end $$;
+drop policy if exists rent_sources_write_admin on rent_sources;
+do $ begin
+  create policy rent_sources_write on rent_sources for all
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
+exception when duplicate_object then null; end $;
 
 do $$ begin
   create policy inventory_rentals_select on inventory_rentals for select using (true);

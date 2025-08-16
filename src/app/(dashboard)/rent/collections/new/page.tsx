@@ -52,15 +52,21 @@ export default function NewRentPaymentPage() {
   async function onSubmit(formData: FormData) {
     setLoading(true);
     setError(null);
+    
+    // Get form values and handle empty strings properly
+    const agreementId = formData.get("agreement_id");
+    const sourceId = formData.get("source_id");
+    
     const body = {
-      agreement_id: String(formData.get("agreement_id") || "") || null,
+      agreement_id: agreementId && agreementId !== "" ? String(agreementId) : null,
       payment_month: String(formData.get("payment_month") || ""),
       months_covered: Number(formData.get("months_covered") || 1),
       amount_due: Number(formData.get("amount_due") || 0),
       amount_paid: Number(formData.get("amount_paid") || 0),
       payment_method: String(formData.get("payment_method") || ""),
       transaction_reference: String(formData.get("transaction_reference") || ""),
-      source_id: String(formData.get("source_id") || "") || null,
+      receiver_name: String(formData.get("receiver_name") || ""),
+      source_id: sourceId && sourceId !== "" ? String(sourceId) : null,
       status: String(formData.get("status") || "paid"),
     };
     const res = await fetch("/api/rent/payments", {
@@ -100,7 +106,7 @@ export default function NewRentPaymentPage() {
                 ))}
               </SelectContent>
             </Select>
-            <input type="hidden" name="agreement_id" />
+            <input type="hidden" name="agreement_id" value="" />
           </div>
         )}
         <div>
@@ -122,7 +128,7 @@ export default function NewRentPaymentPage() {
               ))}
             </SelectContent>
           </Select>
-          <input type="hidden" name="months_covered" defaultValue="1" />
+          <input type="hidden" name="months_covered" value="1" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -149,7 +155,7 @@ export default function NewRentPaymentPage() {
               ))}
             </SelectContent>
           </Select>
-          <input type="hidden" name="source_id" />
+          <input type="hidden" name="source_id" value="" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -160,6 +166,10 @@ export default function NewRentPaymentPage() {
             <Label htmlFor="transaction_reference">Transaction Reference</Label>
             <Input name="transaction_reference" id="transaction_reference" placeholder="Txn ID" />
           </div>
+        </div>
+        <div>
+          <Label htmlFor="receiver_name">Receiver Name</Label>
+          <Input name="receiver_name" id="receiver_name" placeholder="Name of person who received payment" />
         </div>
         <div>
           <Label htmlFor="status">Status</Label>

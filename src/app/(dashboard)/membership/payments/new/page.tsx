@@ -12,7 +12,7 @@ import {
   CreditCard, 
   User, 
   Calendar, 
-  DollarSign, 
+  IndianRupee, 
   Search,
   AlertCircle,
   CheckCircle,
@@ -153,7 +153,20 @@ export default function NewMembershipPaymentPage() {
 
       if (res.ok) {
         const responseData = await res.json();
-        setSuccess(`Payment recorded successfully! Receipt: ${responseData.data?.receipt_number || 'Generated'}`);
+        const paymentId = responseData.data?.id;
+        
+        // Download PDF receipt automatically
+        if (paymentId) {
+          try {
+            const { downloadPaymentReceiptPdf } = await import("@/lib/utils/download-pdf");
+            await downloadPaymentReceiptPdf(paymentId, `membership-fee-receipt-${responseData.data?.receipt_number || paymentId}.pdf`);
+          } catch (pdfError) {
+            console.error("Failed to download PDF:", pdfError);
+            // Don't show error to user as the payment was successful
+          }
+        }
+        
+        setSuccess(`Payment recorded successfully! Receipt: ${responseData.data?.receipt_number || 'Generated'} (PDF downloaded)`);
         
         // Reset form
         setSelectedSubscription("");
@@ -369,7 +382,7 @@ export default function NewMembershipPaymentPage() {
                   <div className="space-y-2">
                     <Label htmlFor="amount">Amount (₹)</Label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <IndianRupee className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="amount"
               type="number" 

@@ -64,5 +64,5 @@ FOR ALL USING (
   )
 );
 
--- Comment on the bucket
-COMMENT ON TABLE storage.buckets IS 'Storage bucket for Samaj application files including member photos and documents';
+-- Comment on the bucket (removed due to permission issues)
+-- COMMENT ON TABLE storage.buckets IS 'Storage bucket for Samaj application files including member photos and documents';

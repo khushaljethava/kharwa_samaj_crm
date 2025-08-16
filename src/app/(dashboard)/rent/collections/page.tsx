@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import DeleteButton from "@/components/ui/DeleteButton";
+import { Button } from "@/components/ui/button";
+import { RentPdfDownloadButton } from "@/components/ui/RentPdfDownloadButton";
 
 async function fetchCollections() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("rent_payments")
-    .select("payment_month, amount_due, amount_paid, status")
+    .select("id, payment_month, amount_due, amount_paid, status, metadata")
     .order("payment_month", { ascending: false })
     .limit(50);
   if (error) throw new Error(error.message);
@@ -30,12 +33,14 @@ export default async function RentCollectionsPage() {
               <th className="p-2">Status</th>
               <th className="p-2">Months Covered</th>
               <th className="p-2">Source</th>
+              <th className="p-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {rows.map(
               (
                 r: {
+                  id: string;
                   payment_month: string | Date;
                   amount_due: number;
                   amount_paid: number;
@@ -53,6 +58,15 @@ export default async function RentCollectionsPage() {
                   <td className="p-2">{r.status}</td>
                   <td className="p-2">{(r.metadata as any)?.months_covered || 1}</td>
                   <td className="p-2">{(r.metadata as any)?.source_id || "—"}</td>
+                  <td className="p-2">
+                    <div className="flex items-center gap-2">
+                      <Link href={`/rent/collections/${r.id}/edit`}>
+                        <Button variant="outline" size="sm">Edit</Button>
+                      </Link>
+                      <DeleteButton endpoint={`/api/rent/payments/${r.id}`} />
+                      <RentPdfDownloadButton paymentId={r.id} />
+                    </div>
+                  </td>
                 </tr>
               ),
             )}

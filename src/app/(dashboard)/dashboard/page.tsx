@@ -3,8 +3,9 @@ import Link from "next/link";
 import { StatCard } from "@/components/ui/stat-card";
 import { Chart, LineChart } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, HandCoins, DollarSign } from "lucide-react";
+import { Users, HandCoins, DollarSign, CreditCard, ReceiptText } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { QuickActions } from "@/components/ui/quick-actions";
 
 type MonthlyPoint = { label: string; value: number };
 
@@ -17,7 +18,7 @@ type RentalRecord = { created_at: string | null; total_amount: number | null };
 type MemberRecord = { id: string; member_code: string | null; created_at: string; is_active: boolean };
 type DonationDisplayRecord = { id: string; donor_name: string | null; amount: number | null; donation_date: string | null };
 type ExpenseRecord = { id: string; category: string | null; amount: number | null; expense_date: string | null; vendor: string | null };
-type FeePaymentRecord = { id: string; amount: number | null; payment_date: string | null; payment_method: string | null; receipt_number: string | null; status: string | null };
+
 
 async function fetchDashboardData() {
   const supabase = await createSupabaseServerClient();
@@ -26,20 +27,16 @@ async function fetchDashboardData() {
     const [
       { count: memberCount },
       { count: activeMembers },
-      { count: pendingFees },
       itemsRes,
       donationsRes,
       rentRes,
-      feeRes,
       invRentalsRes,
       membersRecentRes,
       donationsRecentRes,
       expensesRecentRes,
-      feePaymentsRecentRes,
     ] = await Promise.all([
       supabase.from("members").select("id", { count: "exact", head: true }),
       supabase.from("members").select("id", { count: "exact", head: true }).eq("is_active", true),
-      supabase.from("fee_payments").select("id", { count: "exact", head: true }).eq("status", "pending"),
       supabase.from("inventory_items").select("id, stock_levels").limit(1000),
       (() => {
         const start = new Date();
@@ -57,18 +54,11 @@ async function fetchDashboardData() {
         const start = new Date();
         start.setMonth(start.getMonth() - 5, 1);
         start.setHours(0, 0, 0, 0);
-        return supabase.from("fee_payments").select("amount, payment_date").gte("payment_date", start.toISOString());
-      })(),
-      (() => {
-        const start = new Date();
-        start.setMonth(start.getMonth() - 5, 1);
-        start.setHours(0, 0, 0, 0);
         return supabase.from("inventory_rentals").select("total_amount, created_at").gte("created_at", start.toISOString());
       })(),
       supabase.from("members").select("id, member_code, created_at, is_active").order("created_at", { ascending: false }).limit(5),
       supabase.from("donations").select("id, donor_name, amount, donation_date").order("donation_date", { ascending: false }).limit(5),
       supabase.from("company_expenses").select("id, category, amount, expense_date, vendor").order("expense_date", { ascending: false }).limit(5),
-      supabase.from("fee_payments").select("id, amount, payment_date, payment_method, receipt_number, status").order("payment_date", { ascending: false }).limit(5),
     ]);
 
     const items = (itemsRes.data || []) as InventoryItem[];
@@ -107,10 +97,7 @@ async function fetchDashboardData() {
       const k = toMonthKey(r.payment_month);
       if (k in totalsByMonth) totalsByMonth[k] += Number(r.amount_paid || 0);
     });
-    (feeRes.data || []).forEach((r: FeeRecord) => {
-      const k = toMonthKey(r.payment_date);
-      if (k in totalsByMonth) totalsByMonth[k] += Number(r.amount || 0);
-    });
+
     (invRentalsRes.data || []).forEach((r: RentalRecord) => {
       const k = toMonthKey(r.created_at);
       if (k in totalsByMonth) totalsByMonth[k] += Number(r.total_amount || 0);
@@ -131,7 +118,6 @@ async function fetchDashboardData() {
       stats: {
         memberCount: memberCount ?? 0,
         activeMembers: activeMembers ?? 0,
-        pendingFees: pendingFees ?? 0,
         lowStockCount,
         incomeThisMonth: last,
       },
@@ -145,14 +131,12 @@ async function fetchDashboardData() {
         memberDistribution: [
           { label: "Active", value: activeMembers ?? 0, color: "hsl(142, 76%, 36%)" },
           { label: "Inactive", value: (memberCount ?? 0) - (activeMembers ?? 0), color: "hsl(48, 96%, 53%)" },
-          { label: "Pending Fees", value: pendingFees ?? 0, color: "hsl(217, 91%, 60%)" },
         ],
       },
       tables: {
         recentMembers: membersRecentRes.data || [],
         recentDonations: donationsRecentRes.data || [],
         recentExpenses: expensesRecentRes.data || [],
-        recentFeePayments: feePaymentsRecentRes.data || [],
       },
     };
   } catch (error) {
@@ -161,7 +145,7 @@ async function fetchDashboardData() {
       stats: { memberCount: 0, activeMembers: 0, pendingFees: 0, lowStockCount: 0, incomeThisMonth: 0 },
       trends: { memberTrend: 0, paymentTrend: 0, stockTrend: 0 },
       chartData: { monthlyRevenue: [], memberDistribution: [] },
-      tables: { recentMembers: [], recentDonations: [], recentExpenses: [], recentFeePayments: [] },
+      tables: { recentMembers: [], recentDonations: [], recentExpenses: [] },
     };
   }
 }
@@ -195,14 +179,7 @@ export default async function DashboardHome() {
           description="Currently active"
         />
 
-        <StatCard
-          title="Pending Fees"
-          value={stats.pendingFees.toLocaleString()}
-          trend={{ value: trends.paymentTrend, isPositive: trends.paymentTrend > 0, period: "vs last month" }}
-          icon={HandCoins}
-          variant="warning"
-          description="Outstanding payments"
-        />
+
 
         <StatCard
           title="Income (This Month)"
@@ -217,6 +194,72 @@ export default async function DashboardHome() {
         <LineChart title="Monthly Revenue (last 6 months)" data={chartData.monthlyRevenue} height={300} />
         <Chart title="Member Distribution" data={chartData.memberDistribution} height={200} />
       </div>
+
+      {/* Standard Quick Actions Component */}
+      <QuickActions />
+
+      {/* Quick Actions Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Link href="/dashboard/membership-fee">
+              <div className="p-4 border rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <CreditCard className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Collect Membership Fee</h3>
+                    <p className="text-sm text-muted-foreground">Record payments & activate members</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+            <Link href="/members/new">
+              <div className="p-4 border rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Users className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Add New Member</h3>
+                    <p className="text-sm text-muted-foreground">Register community member</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+            <Link href="/donations/new">
+              <div className="p-4 border rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <HandCoins className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Record Donation</h3>
+                    <p className="text-sm text-muted-foreground">Log community donation</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+            <Link href="/expenses/new">
+              <div className="p-4 border rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <ReceiptText className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Record Expense</h3>
+                    <p className="text-sm text-muted-foreground">Log company expense</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -304,32 +347,6 @@ export default async function DashboardHome() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex items-center justify-between flex-row">
-            <CardTitle>Recent Fee Payments</CardTitle>
-            <Link href="/membership/payments" className="text-sm text-primary">View all</Link>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Receipt</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(tables.recentFeePayments || []).map((p: FeePaymentRecord) => (
-                  <TableRow key={p.id}>
-                    <TableCell>{p.receipt_number || p.id.slice(0, 8)}</TableCell>
-                    <TableCell>₹{Number(p.amount || 0).toLocaleString()}</TableCell>
-                    <TableCell>{p.status || "paid"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

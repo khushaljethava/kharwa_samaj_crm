@@ -1,0 +1,2 @@
+
+// Category Management page removed

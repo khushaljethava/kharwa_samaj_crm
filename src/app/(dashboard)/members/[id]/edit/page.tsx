@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MemberPhotoUploader from "@/components/members/MemberPhotoUploader";
 import MemberDocumentUploader from "@/components/members/MemberDocumentUploader";
-import MemberPaymentManager from "@/components/members/MemberPaymentManager";
+
 
 type PersonalInfo = Record<string, unknown>;
 type ContactInfo = Record<string, unknown>;
@@ -179,8 +179,7 @@ export default function EditMemberPage() {
         currentDocuments={(member.metadata as Metadata)?.documents || null} 
       />
 
-      {/* Payment Management Section */}
-      <MemberPaymentManager memberId={memberId} />
+
       
       <div className="flex gap-3">
         <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>

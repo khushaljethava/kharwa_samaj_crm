@@ -129,6 +129,20 @@ export default function MemberPaymentManager({ memberId }: Props) {
       });
 
       if (res.ok) {
+        const responseData = await res.json();
+        const paymentId = responseData.data?.id;
+        
+        // Download PDF receipt automatically
+        if (paymentId) {
+          try {
+            const { downloadPaymentReceiptPdf } = await import("@/lib/utils/download-pdf");
+            await downloadPaymentReceiptPdf(paymentId, `membership-fee-receipt-${responseData.data?.receipt_number || paymentId}.pdf`);
+          } catch (pdfError) {
+            console.error("Failed to download PDF:", pdfError);
+            // Don't show error to user as the payment was successful
+          }
+        }
+        
         // Reset form
         setSelectedSubscriptionId("");
         setAmount("");
