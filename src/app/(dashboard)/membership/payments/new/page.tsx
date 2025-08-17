@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +45,7 @@ interface AllMember {
   personal_info: any;
 }
 
-export default function NewMembershipPaymentPage() {
+function NewMembershipPaymentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -535,5 +535,13 @@ export default function NewMembershipPaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewMembershipPaymentPage() {
+  return (
+    <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><p>Loading page...</p></div>}>
+      <NewMembershipPaymentPageContent />
+    </Suspense>
   );
 }
